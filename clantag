@@ -1,0 +1,53 @@
+local Services = setmetatable({
+   LocalPlayer = game:GetService("Players").LocalPlayer,
+},{
+   __index = function(self, idx)
+       if game:GetService(idx) then
+           return game:GetService(idx)
+       elseif rawget(self, idx) then
+           return rawget(self, idx)
+       end
+   end
+})
+
+for i, v in pairs(Services.LocalPlayer.PlayerGui.GUI.Scoreboard:GetChildren()) do --Проходит через таблцу счета (Tab)
+   if v.Name == "CT" or v.Name == "T" then --проверяет, за какую вы команду находитесь
+       for k, x in pairs(v:GetChildren()) do --все игроки на сервере
+           if x:IsA("Frame") and x:FindFirstChild("player") then --проверяет, является ли это фреймом и есть ли у него дочерний игрок
+               local Tag = x.player --\\мне точно нужно пояснять каждую строку кода? это вообще кто-нибудь читает?!//
+               local Player = Services.Players:FindFirstChild(Tag.Text) --ппривязывает к игроку, которому стоит тег
+               Services.RunService.RenderStepped:Connect(function() --зацикливание
+                   if Player and Player.OsPlatform and Player.OsPlatform:find("|") then --если их платформа ОС начинается с | (идентификатор) //не вдумыывайтесь :)
+                       Tag.Text = Player.OsPlatform:sub(2, Player.OsPlatform:len()).." "..Player.Name --измените текст тега на платформу os:sub 2 (чтобы мы не видели идентификатор |) на длину платформы os и добавьте к нему свое имя (44 строка все решит)
+                   end
+               end)
+           end
+       end
+       v.ChildAdded:Connect(function(child) --когда новый игрок присоединится
+           if child:IsA("Frame") and child:FindFirstChild("player") then --повторяет процесс
+               local Tag = child.player
+               local Player
+               repeat wait() --вам нужно повторить это, потому что, когда новый игрок присоединяется или вы снова открываете табло, имя игрока - ИГРОК (кому-то это вообще надо объяснять?)
+                   Player = Services.Players:FindFirstChild(Tag.Text)
+               until Player ~= "PLAYER" --повторять до тех пор, пока имя не будет PLAYER
+               Services.RunService.RenderStepped:Connect(function()
+                   if Player and Player.OsPlatform and Player.OsPlatform:find("|") then --так же, как прежде
+                       Tag.Text = Player.OsPlatform:sub(2, Player.OsPlatform:len()).." "..Player.Name
+                   end
+               end)
+           end
+       end)
+   end
+end
+
+local CurrentLetter = 0 --текущая буква, на которой стоит клантег (с чего все начинается)
+local Clantag = "TC" --сам клантег (можете изменить на что угодно)
+
+while wait(0.5) do --частота смены букв (лучшее значение, но тоже можете изменить)
+   Services.LocalPlayer.OsPlatform = "|"..Clantag:sub(0, CurrentLetter).." " --измените платформу ОС локальных игроков на | (идентификатор клантега) и текущая буква клантега (ага)
+   if CurrentLetter == Clantag:len() then --если текущая буква длина клантега то ждем 2 секунды и возвращаемся к началу клантега (да-да)
+       wait(2) --подождите 2 секунды
+       CurrentLetter = 0 --текущая буква меняется на 0
+   end
+   CurrentLetter = CurrentLetter + 1 --изменение текущей буквы на +1
+end
